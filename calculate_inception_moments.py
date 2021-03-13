@@ -99,6 +99,24 @@ def run(config):
       dataset = CocoAnimals(root=root, batch_size = batch_size, classes = classes, transform=transform, masks=False , return_all = True, test_mode = False, imsize=imsize)
       data_loader = DataLoader(dataset,batch_size ,drop_last=True,num_workers=1, shuffle = True)#,shuffle=False)
       loaders = [data_loader]
+  elif config["dataset"]=="celeba64":
+        imsize = 64
+        root =  config["data_folder"] #
+        root_perm =  config["data_folder"]
+        transform = transforms.Compose(
+            [
+                transforms.Scale(imsize),
+                transforms.CenterCrop(imsize),
+                #transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+            ]
+        )
+
+        batch_size = config['batch_size']
+        dataset = Celeba(root = root, transform = transform, batch_size = batch_size, imsize = imsize)
+        data_loader = DataLoader(dataset, batch_size, shuffle = True, drop_last = True)
+        loaders = [data_loader]
 
   else:
       loaders = utils.get_data_loaders(**config)
