@@ -367,7 +367,7 @@ class Unet_Discriminator(nn.Module):
 
 
 
-        if self.resolution==65:
+        if self.resolution==64:
             self.save_features = [0,1,2,3]
         elif self.resolution==128:
             self.save_features = [0,1,2,3,4]
