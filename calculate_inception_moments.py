@@ -101,8 +101,8 @@ def run(config):
       loaders = [data_loader]
   elif config["dataset"]=="celeba64":
         imsize = 64
-        root =  config["data_folder"] #
-        root_perm =  config["data_folder"]
+        root =  config["data_root"] #
+        root_perm =  config["data_root"]
         transform = transforms.Compose(
             [
                 transforms.Scale(imsize),
