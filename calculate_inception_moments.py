@@ -16,7 +16,7 @@ import utils
 import inception_utils
 from tqdm import tqdm, trange
 from argparse import ArgumentParser
-from torchvision import datasets, transforms, utils
+from torchvision import datasets, transforms
 from PyTorchDatasets import CocoAnimals  as CocoAnimals
 from PyTorchDatasets import FFHQ, Celeba
 from torch.utils.data import DataLoader
