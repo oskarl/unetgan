@@ -746,24 +746,24 @@ def load_weights(G, D, state_dict, weights_root, experiment_name,config, epoch_i
   print("epoch id : ", epoch_id)
   if G is not None:
     G.load_state_dict(
-      torch.load('%s/%s.pth' % (root, join_strings('_', ['G', epoch_id,  name_suffix]))),
+      torch.load('%s/%s.pth' % (root, join_strings('_', ['G_ep', epoch_id,  name_suffix]))),
       strict=strict)
     if load_optim:
-      s = torch.load('%s/%s.pth' % (root, join_strings('_', ['G_optim', epoch_id,  name_suffix])))
+      s = torch.load('%s/%s.pth' % (root, join_strings('_', ['G_optim_ep', epoch_id,  name_suffix])))
       print(">>" , len(s))
       #print(s)
       G.optim.load_state_dict(
-        torch.load('%s/%s.pth' % (root, join_strings('_', ['G_optim', epoch_id,  name_suffix]))))
+        torch.load('%s/%s.pth' % (root, join_strings('_', ['G_optim_ep', epoch_id,  name_suffix]))))
   if D is not None:
     D.load_state_dict(
-      torch.load('%s/%s.pth' % (root, join_strings('_', ['D', epoch_id,  name_suffix]))),
+      torch.load('%s/%s.pth' % (root, join_strings('_', ['D_ep', epoch_id,  name_suffix]))),
       strict=strict)
     if load_optim:
       D.optim.load_state_dict(
-        torch.load('%s/%s.pth' % (root, join_strings('_', ['D_optim', epoch_id,  name_suffix]))))
+        torch.load('%s/%s.pth' % (root, join_strings('_', ['D_optim_ep', epoch_id,  name_suffix]))))
   # Load state dict
   for item in state_dict:
-    D = torch.load('%s/%s.pth' % (root, join_strings('_', ['state_dict', epoch_id,  name_suffix])))
+    D = torch.load('%s/%s.pth' % (root, join_strings('_', ['state_dict_ep', epoch_id,  name_suffix])))
     if item in D:
       state_dict[item] = D[item]
     else:
@@ -772,7 +772,7 @@ def load_weights(G, D, state_dict, weights_root, experiment_name,config, epoch_i
 
   if G_ema is not None:
     G_ema.load_state_dict(
-      torch.load('%s/%s.pth' % (root, join_strings('_', ['G_ema', epoch_id, name_suffix]))),
+      torch.load('%s/%s.pth' % (root, join_strings('_', ['G_ema_ep', epoch_id, name_suffix]))),
       strict=strict)
 
 
