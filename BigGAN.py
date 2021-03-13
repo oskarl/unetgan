@@ -37,6 +37,13 @@ def G_arch(ch=64, attention='64', ksize='333333', dilation='111111'):
                              'resolution' : [8, 16, 32, 64, 128],
                              'attention' : {2**i: (2**i in [int(item) for item in attention.split('_')])
                                                             for i in range(3,8)}}
+    arch[64] = {'in_channels' :    [ch * item for item in [16, 16, 4, 2]],
+                             'out_channels' : [ch * item for item in [16, 4, 2, 1]],
+                             'upsample' : [True] * 4,
+                             'resolution' : [8, 16, 32, 64],
+                             'attention' : {2**i: (2**i in [int(item) for item in attention.split('_')])
+                                                            for i in range(3,7)}}
+
     return arch
 
 class Generator(nn.Module):
@@ -278,6 +285,12 @@ def D_arch(ch=64, attention='64',ksize='333333', dilation='111111'):
                              'resolution' : [64, 32, 16, 8, 4, 4],
                              'attention' : {2**i: 2**i in [int(item) for item in attention.split('_')]
                                                             for i in range(2,8)}}
+    arch[64] = {'in_channels' :    [3] + [ch*item for item in [1, 2, 4, 16]],
+                             'out_channels' : [item * ch for item in [1, 2, 4, 16, 16]],
+                             'downsample' : [True] * 4 + [False],
+                             'resolution' : [32, 16, 8, 4, 4],
+                             'attention' : {2**i: 2**i in [int(item) for item in attention.split('_')]
+                                                            for i in range(2,8)}}
     return arch
 
 def D_unet_arch(ch=64, attention='64',ksize='333333', dilation='111111',out_channel_multiplier=1):
@@ -286,6 +299,14 @@ def D_unet_arch(ch=64, attention='64',ksize='333333', dilation='111111',out_chan
     n = 2
 
     ocm = out_channel_multiplier
+
+    arch[64]= {'in_channels' :       [3] + [ch*item for item in       [1, 2, 4, 16, 4*2, 2*2, 1*2,1]],
+                             'out_channels' : [item * ch for item in [1, 2, 4, 16,   4,   2,    1,  1]],
+                             'downsample' : [True]*4 + [False]*4,
+                             'upsample':    [False]*4+ [True] *4,
+                             'resolution' : [32, 16, 8, 4, 8, 16, 32, 64],
+                             'attention' : {2**i: 2**i in [int(item) for item in attention.split('_')]
+                                                            for i in range(2,9)}}
 
     # covers bigger perceptual fields
     arch[128]= {'in_channels' :       [3] + [ch*item for item in       [1, 2, 4, 8, 16, 8*n, 4*2, 2*2, 1*2,1]],

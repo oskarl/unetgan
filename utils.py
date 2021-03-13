@@ -426,28 +426,28 @@ dset_dict = {'I32': dset.ImageFolder, 'I64': dset.ImageFolder,
              'I128': dset.ImageFolder, 'I256': dset.ImageFolder,
              'I32_hdf5': dset.ILSVRC_HDF5, 'I64_hdf5': dset.ILSVRC_HDF5,
              'I128_hdf5': dset.ILSVRC_HDF5, 'I256_hdf5': dset.ILSVRC_HDF5,
-             'C10': dset.CIFAR10, 'C100': dset.CIFAR100, 'coco_animals':None , 'FFHQ': None,  'celeba128': None}
+             'C10': dset.CIFAR10, 'C100': dset.CIFAR100, 'coco_animals':None , 'FFHQ': None,  'celeba128': None, 'celeba64':None}
 imsize_dict = {'I32': 32, 'I32_hdf5': 32,
                'I64': 64, 'I64_hdf5': 64,
                'I128': 128, 'I128_hdf5': 128,
                'I256': 256, 'I256_hdf5': 256,
-               'C10': 32, 'C100': 32, 'coco_animals': 128 , 'FFHQ': 256, 'celeba128':128}
+               'C10': 32, 'C100': 32, 'coco_animals': 128 , 'FFHQ': 256, 'celeba128':128, 'celeba64':64}
 root_dict = {'I32': 'ImageNet', 'I32_hdf5': 'ILSVRC32.hdf5',
              'I64': 'ImageNet', 'I64_hdf5': 'ILSVRC64.hdf5',
              'I128': 'ImageNet', 'I128_hdf5': 'ILSVRC128.hdf5',
              'I256': 'ImageNet', 'I256_hdf5': 'ILSVRC256.hdf5',
-             'C10': 'cifar', 'C100': 'cifar' , 'coco_animals': None , 'FFHQ': None,  'celeba128':None}
+             'C10': 'cifar', 'C100': 'cifar' , 'coco_animals': None , 'FFHQ': None,  'celeba128':None, 'celeba64':None}
 nclass_dict = {'I32': 1000, 'I32_hdf5': 1000,
                'I64': 1000, 'I64_hdf5': 1000,
                'I128': 1000, 'I128_hdf5': 1000,
                'I256': 1000, 'I256_hdf5': 1000,
-               'C10': 10, 'C100': 100, 'coco_animals': 10 , 'FFHQ': 1, 'celeba128':1}
-# Number of classes to put per sample sheet
+               'C10': 10, 'C100': 100, 'coco_animals': 10 , 'FFHQ': 1, 'celeba128':1, 'celeba64':1}
+# Number of classes to put per sample shee
 classes_per_sheet_dict = {'I32': 50, 'I32_hdf5': 50,
                           'I64': 50, 'I64_hdf5': 50,
                           'I128': 20, 'I128_hdf5': 20,
                           'I256': 20, 'I256_hdf5': 20,
-                          'C10': 10, 'C100': 100, 'coco_animals': 10, 'FFHQ': 1,  'celeba128':1}
+                          'C10': 10, 'C100': 100, 'coco_animals': 10, 'FFHQ': 1,  'celeba128':1, 'celeba64':1}
 activation_dict = {'inplace_relu': nn.ReLU(inplace=True),
                    'relu': nn.ReLU(inplace=False),
                    'ir': nn.ReLU(inplace=True),}
