@@ -367,7 +367,9 @@ class Unet_Discriminator(nn.Module):
 
 
 
-        if self.resolution==128:
+        if self.resolution==65:
+            self.save_features = [0,1,2,3]
+        elif self.resolution==128:
             self.save_features = [0,1,2,3,4]
         elif self.resolution==256:
             self.save_features = [0,1,2,3,4,5]
@@ -499,6 +501,14 @@ class Unet_Discriminator(nn.Module):
         # Loop over blocks
 
         for index, blocklist in enumerate(self.blocks[:-1]):
+            if self.resolution == 64:
+                if index==5 :
+                    h = torch.cat((h,residual_features[3]),dim=1)
+                elif index==6:
+                    h = torch.cat((h,residual_features[2]),dim=1)
+                elif index==7:#
+                    h = torch.cat((h,residual_features[1]),dim=1)
+
             if self.resolution == 128:
                 if index==6 :
                     h = torch.cat((h,residual_features[4]),dim=1)
