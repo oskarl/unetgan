@@ -18,7 +18,7 @@ from tqdm import tqdm, trange
 from argparse import ArgumentParser
 from torchvision import datasets, transforms, utils
 from PyTorchDatasets import CocoAnimals  as CocoAnimals
-from PyTorchDatasets import FFHQ, LSUN, CelebaHQ, Celeba
+from PyTorchDatasets import FFHQ, Celeba
 from torch.utils.data import DataLoader
 
 def prepare_parser():
