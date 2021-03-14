@@ -52,7 +52,6 @@ class Extragradient(Optimizer):
         for group in self.param_groups:
             for p in group['params']:
                 u = self.update(p, group)
-                
                 if u is None:
                     continue
                 # Update the current parameters
