@@ -174,7 +174,7 @@ class ExtraSGD(Extragradient):
                 buf.mul_(momentum).add_(d_p)
             else:
                 buf = param_state['momentum_buffer']
-                buf.mul_(momentum).add_(1 - dampening, d_p)
+                buf.mul_(momentum).add_(d_p, alpha= 1 - dampening)
             if nesterov:
                 d_p = d_p.add(momentum, buf)
             else:
@@ -249,7 +249,7 @@ class ExtraAdam(Extragradient):
             grad = grad.add(group['weight_decay'], p.data)
 
         # Decay the first and second moment running average coefficient
-        exp_avg.mul_(beta1).add_(1 - beta1, grad)
+        exp_avg.mul_(beta1).add_(grad, alpha = 1 - beta1)
         exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
         if amsgrad:
             # Maintains the maximum of all 2nd moment running avg. till now
