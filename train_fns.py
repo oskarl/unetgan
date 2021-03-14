@@ -215,10 +215,10 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config, EG=False):
                 print('using modified ortho reg in D')
                 utils.ortho(D, config['D_ortho'])
 
-            #if iteration%2 == 0 and EG:
-            #    D.optim.extrapolation()
-            #else:
-            D.optim.step()
+            if iteration%2 == 0 and EG:
+                D.optim.extrapolation()
+            else:
+                D.optim.step()
             del D_loss
 
         # Optionally toggle "requires_grad"
@@ -263,10 +263,11 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config, EG=False):
             utils.ortho(G, config['G_ortho'],
                                     blacklist=[param for param in G.shared.parameters()])
 
-        #if iteration%2 == 0 and EG:
-        #    G.optim.extrapolation()
-        #else:
-        G.optim.step()
+        print(iteration)
+        if iteration%2 == 0 and EG:
+            G.optim.extrapolation()
+        else:
+            G.optim.step()
         del G_loss
 
         # If we have an ema, update it, regardless of if we test with it or not
