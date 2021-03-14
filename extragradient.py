@@ -85,7 +85,8 @@ class Extragradient(Optimizer):
                 if u is None:
                     continue
                 # Update the parameters saved during the extrapolation step
-                p.data = self.params_copy[i].add_(u)
+                p.data = self.params_copy[i]
+                p.data.add_(u)
 
 
         # Free the old parameters
