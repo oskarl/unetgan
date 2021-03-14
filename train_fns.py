@@ -32,8 +32,8 @@ def BCEloss(D_fake, D_real, d_real_target, d_fake_target):
 def BCEfakeloss(D_fake,target):
     return F.binary_cross_entropy_with_logits(D_fake, target.expand_as(D_fake))
 
-def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config):
-    def train(x, y, epoch, batch_size, target_map = None, r_mixup = 0.0):
+def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config, EG=False):
+    def train(x, y, iteration, epoch, batch_size, target_map = None, r_mixup = 0.0):
         G.optim.zero_grad()
         D.optim.zero_grad()
 
@@ -215,7 +215,10 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config):
                 print('using modified ortho reg in D')
                 utils.ortho(D, config['D_ortho'])
 
-            D.optim.step()
+            if iteration%2 == 0 and EG:
+                D.optim.extrapolate()
+            else:
+                D.optim.step()
             del D_loss
 
         # Optionally toggle "requires_grad"
@@ -261,7 +264,10 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config):
                                     blacklist=[param for param in G.shared.parameters()])
 
 
-        G.optim.step()
+        if iteration%2 == 0 and EG:
+            G.optim.extrapolate()
+        else:
+            G.optim.step()
         del G_loss
 
         # If we have an ema, update it, regardless of if we test with it or not

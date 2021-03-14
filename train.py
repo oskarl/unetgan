@@ -384,7 +384,7 @@ def run(config):
             else:
                 r_mixup = 0.0
 
-            metrics = train(x, y, state_dict["epoch"], batch_size , target_map = target_map, r_mixup = r_mixup)
+            metrics = train(x, y, i, state_dict["epoch"], batch_size , target_map = target_map, r_mixup = r_mixup)
 
 
             if (i+1)%200==0:
