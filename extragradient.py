@@ -52,13 +52,13 @@ class Extragradient(Optimizer):
         for group in self.param_groups:
             for p in group['params']:
                 u = self.update(p, group)
+                if is_empty:
+                    # Save the current parameters for the update step. Several extrapolation step can be made before each update but only the parameters before the first extrapolation step are saved.
+                    self.params_copy.append(p.data.clone())
                 if u is None:
                     continue
                 # Update the current parameters
                 p.data.add_(u)
-                if is_empty:
-                    # Save the current parameters for the update step. Several extrapolation step can be made before each update but only the parameters before the first extrapolation step are saved.
-                    self.params_copy.append(p.data.clone())
 
     def step(self, closure=None):
         """Performs a single optimization step.
@@ -83,6 +83,7 @@ class Extragradient(Optimizer):
                     continue
                 # Update the parameters saved during the extrapolation step
                 p.data = self.params_copy[i].add_(u)
+
 
         # Free the old parameters
         self.params_copy = []
@@ -174,7 +175,7 @@ class ExtraSGD(Extragradient):
                 buf.mul_(momentum).add_(d_p)
             else:
                 buf = param_state['momentum_buffer']
-                buf.mul_(momentum).add_(d_p, alpha= 1 - dampening)
+                buf.mul_(momentum).add_(1 - dampening, d_p)
             if nesterov:
                 d_p = d_p.add(momentum, buf)
             else:
@@ -249,8 +250,8 @@ class ExtraAdam(Extragradient):
             grad = grad.add(group['weight_decay'], p.data)
 
         # Decay the first and second moment running average coefficient
-        exp_avg.mul_(beta1).add_(grad, alpha = 1 - beta1)
-        exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1 - beta2)
+        exp_avg.mul_(beta1).add_(1 - beta1, grad)
+        exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
         if amsgrad:
             # Maintains the maximum of all 2nd moment running avg. till now
             torch.max(max_exp_avg_sq, exp_avg_sq, out=max_exp_avg_sq)
