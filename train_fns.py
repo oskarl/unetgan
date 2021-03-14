@@ -263,7 +263,7 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config, EG=False):
             utils.ortho(G, config['G_ortho'],
                                     blacklist=[param for param in G.shared.parameters()])
 
-
+        print(iteration)
         if iteration%2 == 0 and EG:
             G.optim.extrapolation()
         else:
