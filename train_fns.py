@@ -216,7 +216,7 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config, EG=False):
                 utils.ortho(D, config['D_ortho'])
 
             if iteration%2 == 0 and EG:
-                D.optim.extrapolate()
+                D.optim.extrapolation()
             else:
                 D.optim.step()
             del D_loss
@@ -265,7 +265,7 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config, EG=False):
 
 
         if iteration%2 == 0 and EG:
-            G.optim.extrapolate()
+            G.optim.extrapolation()
         else:
             G.optim.step()
         del G_loss
