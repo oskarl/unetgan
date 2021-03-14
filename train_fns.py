@@ -17,6 +17,7 @@ from PIL import Image
 import numpy as np
 import functools
 import copy
+import extragradient
 
 # Dummy training function for debugging
 def dummy_training_function():
@@ -34,8 +35,8 @@ def BCEfakeloss(D_fake,target):
 
 def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config, EG=False):
     def train(x, y, iteration, epoch, batch_size, target_map = None, r_mixup = 0.0):
-        G.optim.zero_grad()
-        D.optim.zero_grad()
+        #G.optim.zero_grad()
+        #D.optim.zero_grad()
 
         if config["unet_mixup"]:
             real_target = torch.tensor([1.0]).cuda()
