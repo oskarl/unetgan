@@ -242,7 +242,7 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config, EG=False):
 
         # If accumulating gradients, loop multiple times
         for accumulation_index in range(config['num_G_accumulations']):
-
+            print(z__.size)
             G_fake, G_fake_middle = GD(z__[counter], y__[counter], train_G=True, split_D=config['split_D'], reference_x = x[counter] )
 
             G_loss_fake_2d = fake_loss(G_fake)
@@ -268,7 +268,6 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config, EG=False):
         if iteration%2 == 0 and EG:
             G.optim.extrapolation()
         else:
-            print("upd g")
             G.optim.step()
         del G_loss
 
