@@ -67,8 +67,8 @@ class Extragradient(Optimizer):
             closure (callable, optional): A closure that reevaluates the model
                 and returns the loss.
         """
-        if len(self.params_copy) == 0:
-            raise RuntimeError('Need to call extrapolation before calling step.')
+        #if len(self.params_copy) == 0:
+        #    raise RuntimeError('Need to call extrapolation before calling step.')
 
         loss = None
         if closure is not None:
