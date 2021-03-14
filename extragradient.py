@@ -52,16 +52,13 @@ class Extragradient(Optimizer):
         for group in self.param_groups:
             for p in group['params']:
                 u = self.update(p, group)
-                if u is None:
-                    if is_empty:
-                        #Save the current parameters for the update step. Several extrapolation step can be made before each update but only the parameters before the first extrapolation step are saved.
-                        self.params_copy.append(p.data.clone())
-                    continue
-                # Update the current parameters
-                p.data.add_(u)
                 if is_empty:
                     #Save the current parameters for the update step. Several extrapolation step can be made before each update but only the parameters before the first extrapolation step are saved.
                     self.params_copy.append(p.data.clone())
+                if u is None:
+                    continue
+                # Update the current parameters
+                p.data.add_(u)
 
     def step(self, closure=None):
         """Performs a single optimization step.
