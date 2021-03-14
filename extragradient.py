@@ -47,6 +47,7 @@ class Extragradient(Optimizer):
     def extrapolation(self):
         """Performs the extrapolation step and save a copy of the current parameters for the update step.
         """
+        print("extra")
         # Check if a copy of the parameters was already made.
         is_empty = len(self.params_copy) == 0
         for group in self.param_groups:
@@ -84,7 +85,7 @@ class Extragradient(Optimizer):
                 # Update the parameters saved during the extrapolation step
                 p.data = self.params_copy[i].add_(u)
 
-
+        print("step")
         # Free the old parameters
         self.params_copy = []
         return loss

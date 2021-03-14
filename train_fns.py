@@ -35,8 +35,8 @@ def BCEfakeloss(D_fake,target):
 
 def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config, EG=False):
     def train(x, y, iteration, epoch, batch_size, target_map = None, r_mixup = 0.0):
-        #G.optim.zero_grad()
-        #D.optim.zero_grad()
+        G.optim.zero_grad()
+        D.optim.zero_grad()
 
         if config["unet_mixup"]:
             real_target = torch.tensor([1.0]).cuda()
@@ -268,6 +268,7 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config, EG=False):
         if iteration%2 == 0 and EG:
             G.optim.extrapolation()
         else:
+            print("upd g")
             G.optim.step()
         del G_loss
 
