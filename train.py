@@ -117,6 +117,7 @@ def run(config):
     keys = sorted(config.keys())
     for k in keys:
         print(k, ": ", config[k])
+
     G = model.Generator(**config).to(device)
 
     D = model.Unet_Discriminator(**config).to(device)
@@ -179,7 +180,16 @@ def run(config):
 
         print("loaded weigths")
 
-
+    utils.interp_sheet(which_G,
+                                                         num_per_sheet=10,
+                                                         num_midpoints=7,
+                                                         num_classes=config['n_classes'],
+                                                         parallel=config['parallel'],
+                                                         samples_root=config['samples_root'],
+                                                         experiment_name=experiment_name,
+                                                         folder_number=state_dict['itr'],
+                                                         sheet_number=0,
+                                                         fix_z=False, fix_y=False, device='cuda',config=config)
 
     # If parallel, parallelize the GD module
     if config['parallel']:
