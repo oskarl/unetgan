@@ -190,7 +190,8 @@ def run(config):
                                                          folder_number=state_dict['itr'],
                                                          sheet_number=0,
                                                          fix_z=False, fix_y=False, device='cuda',config=config)
-
+    return
+    
     # If parallel, parallelize the GD module
     if config['parallel']:
         GD = nn.DataParallel(GD)
