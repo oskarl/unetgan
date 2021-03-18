@@ -180,7 +180,7 @@ def run(config):
 
         print("loaded weigths")
 
-    utils.interp_sheet(which_G,
+    utils.interp_sheet(G,
                                                          num_per_sheet=10,
                                                          num_midpoints=7,
                                                          num_classes=config['n_classes'],
@@ -191,7 +191,7 @@ def run(config):
                                                          sheet_number=0,
                                                          fix_z=False, fix_y=False, device='cuda',config=config)
     return
-    
+
     # If parallel, parallelize the GD module
     if config['parallel']:
         GD = nn.DataParallel(GD)
