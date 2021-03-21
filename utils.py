@@ -1001,8 +1001,12 @@ def interp_sheet(G, num_per_sheet, num_midpoints, num_classes, parallel,
 
   else:
     print('regular zs')
-    zs = interp(torch.randn(num_per_sheet, 1, G.dim_z, device=device),
-                torch.randn(num_per_sheet, 1, G.dim_z, device=device),
+    z0 = torch.randn(num_per_sheet, 1, G.dim_z, device=device)
+    z1 = torch.randn(num_per_sheet, 1, G.dim_z, device=device)
+    z2 = torch.randn(num_per_sheet, 1, G.dim_z, device=device)
+    z3 = torch.randn(num_per_sheet, 1, G.dim_z, device=device)
+    zs = interp((z0+z1)/2,
+                (z2+z3)/2,
                 num_midpoints).view(-1, G.dim_z)
     print(zs)
   if fix_y: # If fix y, only sample 1 z per row
