@@ -1001,9 +1001,10 @@ def interp_sheet(G, num_per_sheet, num_midpoints, num_classes, parallel,
 
   else:
     print('regular zs')
-    zs = interp(torch.randn(num_per_sheet, 1, G.dim_z, device=device)/10,
-                torch.randn(num_per_sheet, 1, G.dim_z, device=device)/10,
+    zs = interp(torch.randn(num_per_sheet, 1, G.dim_z, device=device),
+                torch.randn(num_per_sheet, 1, G.dim_z, device=device),
                 num_midpoints).view(-1, G.dim_z)
+    print(zs)
   if fix_y: # If fix y, only sample 1 z per row
     ys = sample_1hot(num_per_sheet, num_classes)
     ys = G.shared(ys).view(num_per_sheet, 1, -1)
@@ -1025,7 +1026,7 @@ def interp_sheet(G, num_per_sheet, num_midpoints, num_classes, parallel,
     else:
      out_ims = G(zs, ys).data.cpu()
   interp_style = '' + ('Z' if not fix_z else '') + ('Y' if not fix_y else '')
-  image_filename = '%s/interp%d.jpg' % (samples_root, sheet_number)
+  image_filename = '../interp%d.jpg' % (samples_root, sheet_number)
   print(image_filename)
   torchvision.utils.save_image(out_ims, image_filename,
                                nrow=num_midpoints + 2, normalize=True)

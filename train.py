@@ -181,8 +181,8 @@ def run(config):
         print("loaded weigths")
 
     utils.interp_sheet(G,
-                                                         num_per_sheet=10,
-                                                         num_midpoints=7,
+                                                         num_per_sheet=20,
+                                                         num_midpoints=14,
                                                          num_classes=config['n_classes'],
                                                          parallel=config['parallel'],
                                                          samples_root=config['samples_root'],
