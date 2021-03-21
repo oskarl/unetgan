@@ -1001,10 +1001,10 @@ def interp_sheet(G, num_per_sheet, num_midpoints, num_classes, parallel,
 
   else:
     print('regular zs')
-    z0 = torch.randn(num_per_sheet, 1, G.dim_z, device=device)/math.sqrt(2)
-    z1 = torch.randn(num_per_sheet, 1, G.dim_z, device=device)/math.sqrt(2)
-    z2 = torch.randn(num_per_sheet, 1, G.dim_z, device=device)/math.sqrt(2)
-    z3 = torch.randn(num_per_sheet, 1, G.dim_z, device=device)/math.sqrt(2)
+    z0 = torch.randn(num_per_sheet, 1, G.dim_z, device=device)/2
+    z1 = torch.randn(num_per_sheet, 1, G.dim_z, device=device)/2
+    z2 = torch.randn(num_per_sheet, 1, G.dim_z, device=device)/2
+    z3 = torch.randn(num_per_sheet, 1, G.dim_z, device=device)2
     zs = interp(z0,
                 z1,
                 num_midpoints).view(-1, G.dim_z)
