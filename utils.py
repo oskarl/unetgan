@@ -148,7 +148,7 @@ def prepare_parser():
 
   ### Model init stuff ###
   parser.add_argument(
-    '--seed', type=int, default=0,
+    '--seed', type=int, default=99,
     help='Random seed to use; affects both initialization and '
          ' dataloading. (default: %(default)s)')
   parser.add_argument(

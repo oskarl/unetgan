@@ -503,12 +503,12 @@ def main():
     # parse command line and run
     parser = utils.prepare_parser()
     config = vars(parser.parse_args())
+    print(config)
 
     if config["gpus"] !="":
         os.environ["CUDA_VISIBLE_DEVICES"] = config["gpus"]
     random_number_string = str(int(np.random.rand()*1000000)) + "_" + config["id"]
     config["stop_it"] = 99999999999999
-
 
     if config["debug"]:
         config["save_every"] = 30
