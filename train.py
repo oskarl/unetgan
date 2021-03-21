@@ -23,12 +23,11 @@ import torchvision
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms, utils
 from PyTorchDatasets import CocoAnimals
-from PyTorchDatasets import  FFHQ,Celeba
+from PyTorchDatasets import  FFHQ,FFHQ128,Celeba
 # Import my stuff
 import inception_utils
 import utils
 
-from PyTorchDatasets import CocoAnimals, FFHQ, Celeba
 from fid_score import calculate_fid_given_paths_or_tensor
 from torchvision.datasets import ImageFolder
 import pickle
@@ -180,7 +179,7 @@ def run(config):
 
         print("loaded weigths")
 
-    utils.interp_sheet(G,
+    '''utils.interp_sheet(G,
                                                          num_per_sheet=20,
                                                          num_midpoints=14,
                                                          num_classes=config['n_classes'],
@@ -190,7 +189,7 @@ def run(config):
                                                          folder_number=state_dict['itr'],
                                                          sheet_number=0,
                                                          fix_z=False, fix_y=False, device='cuda',config=config)
-    return
+    return'''
 
     # If parallel, parallelize the GD module
     if config['parallel']:
@@ -233,8 +232,26 @@ def run(config):
         )
 
         batch_size = config['batch_size']
-        print("rooooot:",root)
         dataset = FFHQ(root = root, transform = transform, batch_size = batch_size*config["num_D_accumulations"], imsize = config["resolution"])
+        data_loader = DataLoader(dataset, batch_size, shuffle = True, drop_last = True)
+        loaders = [data_loader]
+    elif config["dataset"]=="FFHQ128":
+
+        root = config["data_folder"]
+        root_perm =  config["data_folder"]
+
+        transform = transforms.Compose(
+            [
+                transforms.Scale(config["resolution"]),
+                transforms.CenterCrop(config["resolution"]),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+            ]
+        )
+
+        batch_size = config['batch_size']
+        dataset = FFHQ128(root = root, transform = transform, batch_size = batch_size*config["num_D_accumulations"], imsize = config["resolution"])
         data_loader = DataLoader(dataset, batch_size, shuffle = True, drop_last = True)
         loaders = [data_loader]
 

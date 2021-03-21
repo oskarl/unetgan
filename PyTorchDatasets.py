@@ -263,6 +263,57 @@ class FFHQ(VisionDataset):
         else:
             return self.random_batch(index)
 
+class FFHQ128(VisionDataset):
+
+    def __init__(self, root, transform, batch_size = 60, test_mode = False, return_all = False, imsize=128):
+
+        self.root = root
+        self.transform = transform
+        self.return_all = return_all
+        all_files = os.listdir(self.root)
+        self.length = len(all_files)
+        self.fixed_transform = transforms.Compose(
+                [ transforms.Resize(imsize),
+                    transforms.CenterCrop(imsize),
+                    #transforms.RandomHorizontalFlip(),
+                    #transforms.ColorJitter(brightness=0.01, contrast=0.01, saturation=0.01, hue=0.01),
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                ])
+
+        self.fixed_indices = []
+
+        for _ in range(batch_size):
+            id = np.random.randint(self.length)
+            self.fixed_indices.append(id)
+
+    def __len__(self):
+        return self.length
+
+
+    def fixed_batch(self):
+        return torch.stack([self.random_batch(idx, True)[0].cuda() for idx in self.fixed_indices])
+
+
+    def random_batch(self,index, fixed=False):
+
+        file = str(index+1).zfill(6) + '.png'
+        image_path = os.path.join(self.root, file )
+        img = Image.open( image_path).convert('RGB')
+        if fixed:
+            img = self.fixed_transform(img)
+        else:
+            img = self.transform(img)
+
+        return img, torch.zeros(1).long(), image_path
+
+    def __getitem__(self,index):
+
+        if self.return_all:
+            return self.exact_batch(index)
+        else:
+            return self.random_batch(index)
+
 
 class Celeba(VisionDataset):
 
