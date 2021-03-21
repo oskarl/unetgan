@@ -76,6 +76,26 @@ def run(config):
       dataset = FFHQ(root = root, transform = transform, test_mode = False)
       data_loader = DataLoader(dataset, batch_size, shuffle = True, drop_last = True)
       loaders = [data_loader]
+  elif config["dataset"]=="FFHQ128":
+      imsize = 128
+
+      root =  config["data_root"] #
+      root_perm =  config["data_root"]
+
+      transform = transforms.Compose(
+          [
+              transforms.Scale(imsize),
+              transforms.CenterCrop(imsize),
+              transforms.RandomHorizontalFlip(),
+              transforms.ToTensor(),
+              transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+          ]
+      )
+
+      batch_size =config['batch_size']
+      dataset = FFHQ128(root = root, transform = transform, test_mode = False)
+      data_loader = DataLoader(dataset, batch_size, shuffle = True, drop_last = True)
+      loaders = [data_loader]
 
   elif config["dataset"]=="coco":
 
