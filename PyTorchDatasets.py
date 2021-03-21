@@ -297,7 +297,7 @@ class FFHQ128(VisionDataset):
 
     def random_batch(self,index, fixed=False):
 
-        file = str(index+1).zfill(5) + '.png'
+        file = str(index).zfill(5) + '.png'
         image_path = os.path.join(self.root, file )
         img = Image.open( image_path).convert('RGB')
         if fixed:
