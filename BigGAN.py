@@ -209,7 +209,8 @@ class Generator(nn.Module):
                                                      betas=(self.B1, self.B2), weight_decay=0,
                                                      eps=self.adam_eps)
         else:
-            self.optim = extragradient.ExtraAdam(params=self.parameters(), lr=self.lr,
+            #extragradient.ExtraAdam
+            self.optim = optim.Adam(params=self.parameters(), lr=self.lr,
                                                      betas=(self.B1, self.B2), weight_decay=0,
                                                      eps=self.adam_eps)
 
@@ -467,7 +468,8 @@ class Unet_Discriminator(nn.Module):
             self.optim = utils.Adam16(params=self.parameters(), lr=self.lr,
                                                          betas=(self.B1, self.B2), weight_decay=0, eps=self.adam_eps)
         else:
-            self.optim = extragradient.ExtraAdam(params=self.parameters(), lr=self.lr,
+            #extragradient.ExtraAdam
+            self.optim = optim.Adam(params=self.parameters(), lr=self.lr,
                                                          betas=(self.B1, self.B2), weight_decay=0, eps=self.adam_eps)
         # LR scheduling, left here for forward compatibility
         # self.lr_sched = {'itr' : 0}# if self.progressive else {}
