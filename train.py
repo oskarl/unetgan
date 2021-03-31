@@ -332,7 +332,7 @@ def run(config):
     # Loaders are loaded, prepare the training function
     if config['which_train_fn'] == 'GAN':
         train = train_fns.GAN_training_function(G, D, GD, z_, y_,
-                                                ema, state_dict, config, EG=True)
+                                                ema, state_dict, config, EG=False)
     # Else, assume debugging and use the dummy train fn
     else:
         train = train_fns.dummy_training_function()
