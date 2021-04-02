@@ -418,7 +418,7 @@ def run(config):
 
             metrics = train(x, y, i, state_dict["epoch"], batch_size , target_map = target_map, r_mixup = r_mixup)
 
-            print('{} seconds'.format(time.time() - t0)
+            print('{} seconds'.format(time.time() - t0))
 
             if (i+1)%200==0:
                 # print this just to have some peace of mind that the model is training
