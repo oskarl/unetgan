@@ -37,6 +37,7 @@ import gc
 import sys
 from types import ModuleType, FunctionType
 from gc import get_referents
+import time
 
 ####
 
@@ -383,8 +384,11 @@ def run(config):
                 break #better for profiling
             # Make sure G and D are in training mode, just in case they got set to eval For D, which typically doesn't have BN, this shouldn't
             # matter much.
+            t0 = time.time()
+
             G.train()
             D.train()
+
             if config['ema']:
                 G_ema.train()
             if config['D_fp16']:
@@ -414,6 +418,7 @@ def run(config):
 
             metrics = train(x, y, i, state_dict["epoch"], batch_size , target_map = target_map, r_mixup = r_mixup)
 
+            print('{} seconds'.format(time.time() - t0)
 
             if (i+1)%200==0:
                 # print this just to have some peace of mind that the model is training
