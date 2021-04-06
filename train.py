@@ -293,6 +293,24 @@ def run(config):
         dataset = Celeba(root = root, transform = transform, batch_size = batch_size*config["num_D_accumulations"], imsize = config["resolution"])
         data_loader = DataLoader(dataset, batch_size, shuffle = True, drop_last = True)
         loaders = [data_loader]
+    elif config["dataset"]=="celeba32":
+
+        root =  config["data_folder"] #
+        root_perm =  config["data_folder"]
+        transform = transforms.Compose(
+            [
+                transforms.Scale(config["resolution"]),
+                transforms.CenterCrop(config["resolution"]),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+            ]
+        )
+
+        batch_size = config['batch_size']
+        dataset = Celeba(root = root, transform = transform, batch_size = batch_size*config["num_D_accumulations"], imsize = config["resolution"])
+        data_loader = DataLoader(dataset, batch_size, shuffle = True, drop_last = True)
+        loaders = [data_loader]
 
     elif config["dataset"]=="coco_animals":
 
@@ -458,7 +476,6 @@ def run(config):
 
                     train_fns.save_and_sample(G, D, G_ema, z_, y_, fixed_z, fixed_y,
                                       state_dict, config, experiment_name, sample_only=True)
-
 
                     with torch.no_grad():
                         real_batch = dataset.fixed_batch()

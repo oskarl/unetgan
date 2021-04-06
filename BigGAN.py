@@ -44,6 +44,12 @@ def G_arch(ch=64, attention='64', ksize='333333', dilation='111111'):
                              'resolution' : [8, 16, 32, 64],
                              'attention' : {2**i: (2**i in [int(item) for item in attention.split('_')])
                                                             for i in range(3,7)}}
+    arch[32] = {'in_channels' :    [ch * item for item in [16, 4, 2]],
+                             'out_channels' : [ch * item for item in [4, 2, 1]],
+                             'upsample' : [True] * 4,
+                             'resolution' : [8, 16, 32],
+                             'attention' : {2**i: (2**i in [int(item) for item in attention.split('_')])
+                                                            for i in range(3,6)}}
 
     return arch
 
@@ -293,6 +299,12 @@ def D_arch(ch=64, attention='64',ksize='333333', dilation='111111'):
                              'resolution' : [32, 16, 8, 4, 4],
                              'attention' : {2**i: 2**i in [int(item) for item in attention.split('_')]
                                                             for i in range(2,8)}}
+    arch[32] = {'in_channels' :    [3] + [ch*item for item in [1, 2, 16]],
+                             'out_channels' : [item * ch for item in [1, 2, 16, 16]],
+                             'downsample' : [True] * 3 + [False],
+                             'resolution' : [16, 8, 4, 4],
+                             'attention' : {2**i: 2**i in [int(item) for item in attention.split('_')]
+                                                            for i in range(2,8)}}
     return arch
 
 def D_unet_arch(ch=64, attention='64',ksize='333333', dilation='111111',out_channel_multiplier=1):
@@ -301,6 +313,14 @@ def D_unet_arch(ch=64, attention='64',ksize='333333', dilation='111111',out_chan
     n = 2
 
     ocm = out_channel_multiplier
+
+    arch[32]= {'in_channels' :       [3] + [ch*item for item in       [1, 2, 16, 2*2, 1*2,1]],
+                             'out_channels' : [item * ch for item in [1, 2, 16,   2,    1,  1]],
+                             'downsample' : [True]*3 + [False]*3,
+                             'upsample':    [False]*3+ [True] *3,
+                             'resolution' : [16, 8, 4, 8, 16, 32],
+                             'attention' : {2**i: 2**i in [int(item) for item in attention.split('_')]
+                                                            for i in range(2,7)}}
 
     arch[64]= {'in_channels' :       [3] + [ch*item for item in       [1, 2, 4, 16, 4*2, 2*2, 1*2,1]],
                              'out_channels' : [item * ch for item in [1, 2, 4, 16,   4,   2,    1,  1]],
@@ -369,6 +389,8 @@ class Unet_Discriminator(nn.Module):
 
 
 
+        if self.resolution==32:
+            self.save_features = [0,1,2]
         if self.resolution==64:
             self.save_features = [0,1,2,3]
         elif self.resolution==128:
@@ -504,6 +526,12 @@ class Unet_Discriminator(nn.Module):
         # Loop over blocks
 
         for index, blocklist in enumerate(self.blocks[:-1]):
+            if self.resolution == 32:
+                if index==4 :
+                    h = torch.cat((h,residual_features[2]),dim=1)
+                elif index==5:
+                    h = torch.cat((h,residual_features[1]),dim=1)
+
             if self.resolution == 64:
                 if index==5 :
                     h = torch.cat((h,residual_features[3]),dim=1)
