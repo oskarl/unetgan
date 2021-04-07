@@ -216,11 +216,11 @@ class Generator(nn.Module):
                                                      eps=self.adam_eps)
         else:
             #optim.Adam
-            print('USING OGDA')
-            self.optim = extragradient.OMD(params=self.parameters(), lr=self.lr)
-            #self.optim = extragradient.OptimisticAdam(params=self.parameters(), lr=self.lr,
-            #                                         betas=(self.B1, self.B2), weight_decay=0,
-            #                                         eps=self.adam_eps)
+            print('USING OptimisticAdam')
+            #self.optim = extragradient.OMD(params=self.parameters(), lr=self.lr)
+            self.optim = extragradient.OptimisticAdam(params=self.parameters(), lr=self.lr,
+                                                     betas=(self.B1, self.B2), weight_decay=0,
+                                                     eps=self.adam_eps)
 
         # LR scheduling, left here for forward compatibility
         # self.lr_sched = {'itr' : 0}# if self.progressive else {}
@@ -493,10 +493,10 @@ class Unet_Discriminator(nn.Module):
                                                          betas=(self.B1, self.B2), weight_decay=0, eps=self.adam_eps)
         else:
             #optim.Adam
-            print('USING OGDA')
-            self.optim = extragradient.OMD(params=self.parameters(), lr=self.lr)
-            #self.optim = extragradient.OptimisticAdam(params=self.parameters(), lr=self.lr,
-            #                                             betas=(self.B1, self.B2), weight_decay=0, eps=self.adam_eps)
+            print('USING OptimisticAdam')
+            #self.optim = extragradient.OMD(params=self.parameters(), lr=self.lr)
+            self.optim = extragradient.OptimisticAdam(params=self.parameters(), lr=self.lr,
+                                                         betas=(self.B1, self.B2), weight_decay=0, eps=self.adam_eps)
         # LR scheduling, left here for forward compatibility
         # self.lr_sched = {'itr' : 0}# if self.progressive else {}
         # self.j = 0
