@@ -431,7 +431,7 @@ imsize_dict = {'I32': 32, 'I32_hdf5': 32,
                'I64': 64, 'I64_hdf5': 64,
                'I128': 128, 'I128_hdf5': 128,
                'I256': 256, 'I256_hdf5': 256,
-               'C10': 32, 'C100': 32, 'coco_animals': 128 , 'FFHQ': 256, 'FFHQ128': 128, 'celeba128':128, 'celeba64':64, 'celeba64':32}
+               'C10': 32, 'C100': 32, 'coco_animals': 128 , 'FFHQ': 256, 'FFHQ128': 128, 'celeba128':128, 'celeba64':64, 'celeba32':32}
 root_dict = {'I32': 'ImageNet', 'I32_hdf5': 'ILSVRC32.hdf5',
              'I64': 'ImageNet', 'I64_hdf5': 'ILSVRC64.hdf5',
              'I128': 'ImageNet', 'I128_hdf5': 'ILSVRC128.hdf5',
