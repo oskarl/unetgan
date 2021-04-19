@@ -507,6 +507,10 @@ def GAN_training_function_EG_same_sample(G, D, GD, z_, y_, ema, state_dict, conf
         G.optim.extrapolation()
         del G_loss
 
+        if config['toggle_grads']:
+            utils.toggle_grad(D, True)
+            utils.toggle_grad(G, False)
+
         counter = 0
         D.optim.zero_grad()
         if use_mixup_in_this_round:
