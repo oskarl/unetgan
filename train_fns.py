@@ -304,6 +304,398 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config, EG=False):
         return out
     return train
 
+def GAN_training_function_EG_same_sample(G, D, GD, z_, y_, ema, state_dict, config):
+    def train(x, y, iteration, epoch, batch_size, target_map = None, r_mixup = 0.0):
+        G.optim.zero_grad()
+        D.optim.zero_grad()
+
+        if config["unet_mixup"]:
+            real_target = torch.tensor([1.0]).cuda()
+            fake_target = torch.tensor([0.0]).cuda()
+
+        if config["unet_mixup"] and not config["full_batch_mixup"]:
+            use_mixup_in_this_round = True
+        elif config["unet_mixup"] and config["full_batch_mixup"]:
+            use_mixup_in_this_round = torch.rand(1).detach().item()<r_mixup
+        else:
+            use_mixup_in_this_round = False
+
+        out = {}
+
+        skip_normal_real_fake_loss = (use_mixup_in_this_round and config["full_batch_mixup"] )
+
+        n_d_accu = config['num_D_accumulations']
+
+        split_size = int(x.size(0)/n_d_accu)
+
+        x = torch.split(x, split_size)
+        y = torch.split(y, split_size)
+
+        d_real_target = torch.tensor([1.0]).cuda()
+        d_fake_target = torch.tensor([0.0]).cuda()
+
+        discriminator_loss = functools.partial(BCEloss, d_real_target=d_real_target, d_fake_target=d_fake_target)
+        mix_fake_target = torch.tensor([1.0]).cuda()
+        fake_loss = functools.partial(BCEfakeloss, target = mix_fake_target)
+
+        # Optionally toggle D and G's "require_grad"
+        if config['toggle_grads']:
+            utils.toggle_grad(D, True)
+            utils.toggle_grad(G, False)
+
+        z_.sample_()
+        y_.sample_()
+
+        D.optim.zero_grad()
+        if use_mixup_in_this_round:
+            if (not config["full_batch_mixup"]) or (config["full_batch_mixup"] and (config["consistency_loss_and_augmentation"] or config["consistency_loss"]) ):
+
+                D_fake, D_real , D_mixed, G_z, mixed,  D_middle_fake, D_middle_real, D_middle_mixed, target_map   = GD(z_[:batch_size], y_[:batch_size],
+                                                    x[counter], y[counter], train_G=False,
+                                                    split_D=config['split_D'], mixup = True, target_map = target_map) # mixup can be true because weight is set to 0 when no mixup is used
+            else:
+                D_mixed, G_z, mixed, D_middle_mixed, target_map   = GD(z_[:batch_size], y_[:batch_size],
+                                                    x[counter], y[counter], train_G=False, return_G_z = True,
+                                                    split_D=config['split_D'], mixup = True, mixup_only = True, target_map = target_map)
+            if config["slow_mixup"] and not config["full_batch_mixup"]:
+                mixup_coeff = min(1.0, epoch/config["warmup_epochs"] )#use without full batch mixup
+            else:
+                mixup_coeff = 1.0
+            if config["display_mixed_batch"]:
+                # This can help for debugging
+                plt.figure()
+                m = torchvision.utils.make_grid(mixed,nrow=5,padding=2,normalize = True)
+                m = m.permute(1,2,0)
+                m = m.cpu().numpy()
+                plt.imshow(m)
+                plt.figure()
+                plt.figure()
+                m = torchvision.utils.make_grid(G_z,nrow=5,padding=2,normalize = True)
+                m = m.permute(1,2,0)
+                m = m.cpu().numpy()
+                plt.imshow(m)
+                plt.figure()
+                plt.figure()
+                m = torchvision.utils.make_grid(x[counter],nrow=5,padding=2,normalize = True)
+                m = m.permute(1,2,0)
+                m = m.cpu().numpy()
+                plt.imshow(m)
+                plt.figure()
+                m = torchvision.utils.make_grid(target_map,nrow=5,padding=2)
+                m = m.permute(1,2,0)
+                m = m.cpu().numpy()
+                plt.imshow(m)
+                plt.title("mix")
+                plt.show()
+                plt.figure()
+        else:
+            D_fake, D_real , G_z, D_middle_fake, D_middle_real   = GD(z_[:batch_size], y_[:batch_size],
+                                                x[counter], y[counter], train_G=False,
+                                                split_D=config['split_D'])
+        if not skip_normal_real_fake_loss:
+            D_loss_real_2d, D_loss_fake_2d = discriminator_loss(D_fake.view(-1), D_real.view(-1))
+            D_loss_real_2d_item = D_loss_real_2d.detach().item()
+            D_loss_fake_2d_item = D_loss_fake_2d.detach().item()
+        if use_mixup_in_this_round  and (config["consistency_loss"] or config["consistency_loss_and_augmentation"]):
+            mix =  D_real*target_map + D_fake*(1-target_map)
+        if use_mixup_in_this_round:
+            D_mixed_flattened = D_mixed.view(-1)
+            target_map_flattend = target_map.view(-1)
+
+            mix_list = []
+            for i in range(D_mixed.size(0)):
+                # MIXUP LOSS 2D
+                mix2d_i= F.binary_cross_entropy_with_logits(D_mixed[i].view(-1),target_map[i].view(-1) )
+                mix_list.append(mix2d_i)
+
+            D_loss_mixed_2d = torch.stack(mix_list)
+            #-> D_loss_mixed_2d.mean() is taken later
+
+            D_loss_mixed_2d_item = D_loss_mixed_2d.mean().detach().item()
+            #D_loss_mixed_2d = D_loss_mixed_2d.view(D_mixed.size()).mean([2,3])
+        if not skip_normal_real_fake_loss:
+            D_loss_real_middle, D_loss_fake_middle = discriminator_loss(D_middle_fake, D_middle_real)
+
+            D_loss_real_middle_item = D_loss_real_middle.detach().item()
+            D_loss_fake_middle_item = D_loss_fake_middle.detach().item()
+        if use_mixup_in_this_round and not config["consistency_loss"]:
+            # consistency loss is only concerned with segmenter output
+            #target for mixed encoder loss is fake
+            mix_bce = F.binary_cross_entropy_with_logits(D_middle_mixed, fake_target.expand_as(D_middle_mixed), reduction="none")
+            mixed_middle_loss = mixup_coeff*mix_bce
+            mixed_middle_loss_item = mixed_middle_loss.mean().detach().item()
+        if skip_normal_real_fake_loss:
+            D_loss_real = torch.tensor([0.0]).cuda()
+            D_loss_fake = torch.tensor([0.0]).cuda()
+        else:
+            D_loss_real = D_loss_real_2d + D_loss_real_middle
+            D_loss_fake = D_loss_fake_2d + D_loss_fake_middle
+        D_loss_real_item = D_loss_real.detach().item()
+        D_loss_fake_item = D_loss_fake.detach().item()
+        D_loss = 0.5*D_loss_real + 0.5*D_loss_fake
+        if use_mixup_in_this_round:
+            if config["consistency_loss"] or config["consistency_loss_and_augmentation"]:
+                consistency_loss = mixup_coeff*1.0*F.mse_loss(D_mixed, mix )
+                consistency_loss_item = consistency_loss.float().detach().item()
+
+            if not config["consistency_loss"]:
+                # GAN loss from cutmix augmentation (=/= consitency loss)
+                mix_loss = D_loss_mixed_2d + mixed_middle_loss
+                mix_loss = mix_loss.mean()
+            else:
+                mix_loss = 0.0
+
+            if config["consistency_loss"]:
+                mix_loss = consistency_loss
+            elif config["consistency_loss_and_augmentation"]:
+                mix_loss = mix_loss + consistency_loss
+
+            D_loss = D_loss + mix_loss
+        D_loss = D_loss / float(config['num_D_accumulations'])
+        D_loss.backward()
+        # Optionally apply ortho reg in D
+        if config['D_ortho'] > 0.0:
+            # Debug print to indicate we're using ortho reg in D.
+            print('using modified ortho reg in D')
+            utils.ortho(D, config['D_ortho'])
+        D.optim.extrapolation()
+        del D_loss
+
+        # Optionally toggle "requires_grad"
+        if config['toggle_grads']:
+            utils.toggle_grad(D, False)
+            utils.toggle_grad(G, True)
+
+        ######################################
+        # G-step
+        ######################################
+        # Zero G's gradients by default before training G, for safety
+        G.optim.zero_grad()
+        counter = 0
+
+        #z_.sample_()
+        #y_.sample_()
+
+        z__ = torch.split(z_, split_size) #batch_size)
+        y__ = torch.split(y_, split_size) #batch_size)
+
+        # If accumulating gradients, loop multiple times
+        for accumulation_index in range(config['num_G_accumulations']):
+            G_fake, G_fake_middle = GD(z__[counter], y__[counter], train_G=True, split_D=config['split_D'], reference_x = x[counter] )
+
+            G_loss_fake_2d = fake_loss(G_fake)
+            G_loss_fake_middle = fake_loss(G_fake_middle)
+            G_loss = 0.5*G_loss_fake_middle + 0.5*G_loss_fake_2d
+            G_loss = G_loss / float(config['num_G_accumulations'])
+
+            G_loss_fake_middle_item = G_loss_fake_middle.detach().item()
+            G_loss_fake_2d_item = G_loss_fake_2d.detach().item()
+            G_loss_item = G_loss.detach().item()
+
+            G_loss.backward()
+            counter += 1
+
+        # Optionally apply modified ortho reg in G
+        if config['G_ortho'] > 0.0:
+            print('using modified ortho reg in G') # Debug print to indicate we're using ortho reg in G
+            # Don't ortho reg shared, it makes no sense. Really we should blacklist any embeddings for this
+            utils.ortho(G, config['G_ortho'],
+                                    blacklist=[param for param in G.shared.parameters()])
+
+        print(iteration)
+        G.optim.extrapolation()
+        del G_loss
+
+        D.optim.zero_grad()
+        if use_mixup_in_this_round:
+            if (not config["full_batch_mixup"]) or (config["full_batch_mixup"] and (config["consistency_loss_and_augmentation"] or config["consistency_loss"]) ):
+
+                D_fake, D_real , D_mixed, G_z, mixed,  D_middle_fake, D_middle_real, D_middle_mixed, target_map   = GD(z_[:batch_size], y_[:batch_size],
+                                                    x[counter], y[counter], train_G=False,
+                                                    split_D=config['split_D'], mixup = True, target_map = target_map) # mixup can be true because weight is set to 0 when no mixup is used
+            else:
+                D_mixed, G_z, mixed, D_middle_mixed, target_map   = GD(z_[:batch_size], y_[:batch_size],
+                                                    x[counter], y[counter], train_G=False, return_G_z = True,
+                                                    split_D=config['split_D'], mixup = True, mixup_only = True, target_map = target_map)
+            if config["slow_mixup"] and not config["full_batch_mixup"]:
+                mixup_coeff = min(1.0, epoch/config["warmup_epochs"] )#use without full batch mixup
+            else:
+                mixup_coeff = 1.0
+            if config["display_mixed_batch"]:
+                # This can help for debugging
+                plt.figure()
+                m = torchvision.utils.make_grid(mixed,nrow=5,padding=2,normalize = True)
+                m = m.permute(1,2,0)
+                m = m.cpu().numpy()
+                plt.imshow(m)
+                plt.figure()
+                plt.figure()
+                m = torchvision.utils.make_grid(G_z,nrow=5,padding=2,normalize = True)
+                m = m.permute(1,2,0)
+                m = m.cpu().numpy()
+                plt.imshow(m)
+                plt.figure()
+                plt.figure()
+                m = torchvision.utils.make_grid(x[counter],nrow=5,padding=2,normalize = True)
+                m = m.permute(1,2,0)
+                m = m.cpu().numpy()
+                plt.imshow(m)
+                plt.figure()
+                m = torchvision.utils.make_grid(target_map,nrow=5,padding=2)
+                m = m.permute(1,2,0)
+                m = m.cpu().numpy()
+                plt.imshow(m)
+                plt.title("mix")
+                plt.show()
+                plt.figure()
+        else:
+            D_fake, D_real , G_z, D_middle_fake, D_middle_real   = GD(z_[:batch_size], y_[:batch_size],
+                                                x[counter], y[counter], train_G=False,
+                                                split_D=config['split_D'])
+        if not skip_normal_real_fake_loss:
+            D_loss_real_2d, D_loss_fake_2d = discriminator_loss(D_fake.view(-1), D_real.view(-1))
+            D_loss_real_2d_item = D_loss_real_2d.detach().item()
+            D_loss_fake_2d_item = D_loss_fake_2d.detach().item()
+        if use_mixup_in_this_round  and (config["consistency_loss"] or config["consistency_loss_and_augmentation"]):
+            mix =  D_real*target_map + D_fake*(1-target_map)
+        if use_mixup_in_this_round:
+            D_mixed_flattened = D_mixed.view(-1)
+            target_map_flattend = target_map.view(-1)
+
+            mix_list = []
+            for i in range(D_mixed.size(0)):
+                # MIXUP LOSS 2D
+                mix2d_i= F.binary_cross_entropy_with_logits(D_mixed[i].view(-1),target_map[i].view(-1) )
+                mix_list.append(mix2d_i)
+
+            D_loss_mixed_2d = torch.stack(mix_list)
+            #-> D_loss_mixed_2d.mean() is taken later
+
+            D_loss_mixed_2d_item = D_loss_mixed_2d.mean().detach().item()
+            #D_loss_mixed_2d = D_loss_mixed_2d.view(D_mixed.size()).mean([2,3])
+        if not skip_normal_real_fake_loss:
+            D_loss_real_middle, D_loss_fake_middle = discriminator_loss(D_middle_fake, D_middle_real)
+
+            D_loss_real_middle_item = D_loss_real_middle.detach().item()
+            D_loss_fake_middle_item = D_loss_fake_middle.detach().item()
+        if use_mixup_in_this_round and not config["consistency_loss"]:
+            # consistency loss is only concerned with segmenter output
+            #target for mixed encoder loss is fake
+            mix_bce = F.binary_cross_entropy_with_logits(D_middle_mixed, fake_target.expand_as(D_middle_mixed), reduction="none")
+            mixed_middle_loss = mixup_coeff*mix_bce
+            mixed_middle_loss_item = mixed_middle_loss.mean().detach().item()
+        if skip_normal_real_fake_loss:
+            D_loss_real = torch.tensor([0.0]).cuda()
+            D_loss_fake = torch.tensor([0.0]).cuda()
+        else:
+            D_loss_real = D_loss_real_2d + D_loss_real_middle
+            D_loss_fake = D_loss_fake_2d + D_loss_fake_middle
+        D_loss_real_item = D_loss_real.detach().item()
+        D_loss_fake_item = D_loss_fake.detach().item()
+        D_loss = 0.5*D_loss_real + 0.5*D_loss_fake
+        if use_mixup_in_this_round:
+            if config["consistency_loss"] or config["consistency_loss_and_augmentation"]:
+                consistency_loss = mixup_coeff*1.0*F.mse_loss(D_mixed, mix )
+                consistency_loss_item = consistency_loss.float().detach().item()
+
+            if not config["consistency_loss"]:
+                # GAN loss from cutmix augmentation (=/= consitency loss)
+                mix_loss = D_loss_mixed_2d + mixed_middle_loss
+                mix_loss = mix_loss.mean()
+            else:
+                mix_loss = 0.0
+
+            if config["consistency_loss"]:
+                mix_loss = consistency_loss
+            elif config["consistency_loss_and_augmentation"]:
+                mix_loss = mix_loss + consistency_loss
+
+            D_loss = D_loss + mix_loss
+        D_loss = D_loss / float(config['num_D_accumulations'])
+        D_loss.backward()
+        # Optionally apply ortho reg in D
+        if config['D_ortho'] > 0.0:
+            # Debug print to indicate we're using ortho reg in D.
+            print('using modified ortho reg in D')
+            utils.ortho(D, config['D_ortho'])
+        D.optim.step()
+        del D_loss
+
+        # Optionally toggle "requires_grad"
+        if config['toggle_grads']:
+            utils.toggle_grad(D, False)
+            utils.toggle_grad(G, True)
+
+        ######################################
+        # G-step
+        ######################################
+        # Zero G's gradients by default before training G, for safety
+        G.optim.zero_grad()
+        counter = 0
+
+        #z_.sample_()
+        #y_.sample_()
+
+        z__ = torch.split(z_, split_size) #batch_size)
+        y__ = torch.split(y_, split_size) #batch_size)
+
+        # If accumulating gradients, loop multiple times
+        for accumulation_index in range(config['num_G_accumulations']):
+            G_fake, G_fake_middle = GD(z__[counter], y__[counter], train_G=True, split_D=config['split_D'], reference_x = x[counter] )
+
+            G_loss_fake_2d = fake_loss(G_fake)
+            G_loss_fake_middle = fake_loss(G_fake_middle)
+            G_loss = 0.5*G_loss_fake_middle + 0.5*G_loss_fake_2d
+            G_loss = G_loss / float(config['num_G_accumulations'])
+
+            G_loss_fake_middle_item = G_loss_fake_middle.detach().item()
+            G_loss_fake_2d_item = G_loss_fake_2d.detach().item()
+            G_loss_item = G_loss.detach().item()
+
+            G_loss.backward()
+            counter += 1
+
+        # Optionally apply modified ortho reg in G
+        if config['G_ortho'] > 0.0:
+            print('using modified ortho reg in G') # Debug print to indicate we're using ortho reg in G
+            # Don't ortho reg shared, it makes no sense. Really we should blacklist any embeddings for this
+            utils.ortho(G, config['G_ortho'],
+                                    blacklist=[param for param in G.shared.parameters()])
+
+        print(iteration)
+        G.optim.step()
+        del G_loss
+
+        # If we have an ema, update it, regardless of if we test with it or not
+        if config['ema']:
+            ema.update(state_dict['itr'])
+
+
+        # save intermediate losses
+        if use_mixup_in_this_round and (config["consistency_loss"] or config["consistency_loss_and_augmentation"]) and config["num_D_steps"]>0:
+            out["consistency"] = float(consistency_loss_item)
+
+        out['G_loss'] = float(G_loss_item)
+        if  not (config["full_batch_mixup"] and use_mixup_in_this_round) and config["num_D_steps"]>0:
+            out['D_loss_real'] = float(D_loss_real_item)
+            out['D_loss_fake'] = float(D_loss_fake_item)
+
+        if use_mixup_in_this_round and not config["consistency_loss"] and config["num_D_steps"]>0:
+            out["mixed_middle_loss"] = float(mixed_middle_loss_item)
+            out["D_loss_mixed_2d"] = float(D_loss_mixed_2d_item)
+
+        if  not (config["full_batch_mixup"] and use_mixup_in_this_round):
+            if config["num_D_steps"]>0:
+                out["D_loss_real_middle"] = float(D_loss_real_middle_item)
+                out["D_loss_fake_middle"] = float(D_loss_fake_middle_item)
+                out["D_loss_real_2d"] = float(D_loss_real_2d_item)
+                out["D_loss_fake_2d"] = float(D_loss_fake_2d_item)
+            out["G_loss_fake_middle"] = float(G_loss_fake_middle_item)
+            out["G_loss_fake_2d"] = float(G_loss_fake_2d_item)
+
+        return out
+    return train
+
 ''' This function takes in the model, saves the weights (multiple copies if
         requested), and prepares sample sheets: one consisting of samples given
         a fixed noise seed (to show how the model evolves throughout training),
