@@ -507,6 +507,7 @@ def GAN_training_function_EG_same_sample(G, D, GD, z_, y_, ema, state_dict, conf
         G.optim.extrapolation()
         del G_loss
 
+        counter = 0
         D.optim.zero_grad()
         if use_mixup_in_this_round:
             if (not config["full_batch_mixup"]) or (config["full_batch_mixup"] and (config["consistency_loss_and_augmentation"] or config["consistency_loss"]) ):
