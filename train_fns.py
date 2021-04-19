@@ -345,6 +345,7 @@ def GAN_training_function_EG_same_sample(G, D, GD, z_, y_, ema, state_dict, conf
 
         z_.sample_()
         y_.sample_()
+        counter = 0
 
         D.optim.zero_grad()
         if use_mixup_in_this_round:
